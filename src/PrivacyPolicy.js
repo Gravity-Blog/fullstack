@@ -3,30 +3,16 @@ import React from 'react';
 
 const PrivacyPolicy = () => {
   return (
-    <div className="max-w-4xl mx-auto p-6 font-sans">
-      <h1 className="text-3xl font-light text-gray-800 mb-8">Privacy Policy</h1>
-      <p className="text-gray-700 mb-4">
-        At gravity's sur-face!, we are committed to protecting your privacy. This Privacy Policy explains how we collect, use, and protect your personal information when you use our platform.
+    <div className="max-w-4xl mx-auto p-4 md:p-6 font-sans bg-white dark:bg-gray-900 rounded-lg shadow-md">
+      <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-4">Privacy Policy</h1>
+      <p className="text-gray-600 dark:text-gray-300 mb-2">
+        Your privacy is important to us. This policy outlines how we collect, use, and protect your information.
       </p>
-      <h2 className="text-2xl font-light mb-4">1. Information We Collect</h2>
-      <p className="text-gray-700 mb-4">
-        We may collect information such as your name, email address, and the content you post on the platform.
+      <p className="text-gray-600 dark:text-gray-300 mb-2">
+        We collect data to provide better services to our users. This includes information you provide directly, as well as data collected automatically.
       </p>
-      <h2 className="text-2xl font-light mb-4">2. How We Use Your Information</h2>
-      <p className="text-gray-700 mb-4">
-        We use your information to provide and improve our platform, to communicate with you, and to protect our rights and property.
-      </p>
-      <h2 className="text-2xl font-light mb-4">3. Sharing Your Information</h2>
-      <p className="text-gray-700 mb-4">
-        We do not sell, trade, or otherwise transfer your personal information to third parties. However, we may share your information with third-party service providers who assist us in operating our platform.
-      </p>
-      <h2 className="text-2xl font-light mb-4">4. Your Rights</h2>
-      <p className="text-gray-700 mb-4">
-        You have the right to access, correct, or delete your personal information. You can contact us to exercise these rights.
-      </p>
-      <h2 className="text-2xl font-light mb-4">5. Security</h2>
-      <p className="text-gray-700 mb-4">
-        We take reasonable measures to protect your personal information from unauthorized access, disclosure, or destruction.
+      <p className="text-gray-600 dark:text-gray-300">
+        We do not share your personal information with third parties without your consent, except as required by law.
       </p>
     </div>
   );

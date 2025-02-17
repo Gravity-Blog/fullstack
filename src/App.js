@@ -1,12 +1,14 @@
-// App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebase/config';
 import { collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, limit, query } from 'firebase/firestore';
-import { Pencil, Save, Trash, FileText, Eye, Menu, X } from 'lucide-react';
-import ToggleSwitch from './ToggleSwitch';
+import { Pencil, Save, Trash, FileText, Eye, Menu, X, MessageCircle } from 'lucide-react';
 import TermsOfService from './TermsOfService';
 import PrivacyPolicy from './PrivacyPolicy';
 import PropTypes from 'prop-types';
+import ChatInterface from './ChatInterface';
+import GoogleNews from './GoogleNews'; // Import GoogleNews component
+import ToggleSwitch from './ToggleSwitch'; // Import ToggleSwitch component
+import MachineLearningAlgorithm from './MachineLearningAlgorithm'; // Import MachineLearningAlgorithm component
 
 const MobileMenu = ({ isOpen, onClose, onNavigate }) => {
   if (!isOpen) return null;
@@ -16,7 +18,7 @@ const MobileMenu = ({ isOpen, onClose, onNavigate }) => {
       <div className="fixed inset-0 bg-black bg-opacity-50" onClick={onClose}></div>
       <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 shadow-lg transform transition-transform duration-300 ease-in-out">
         <div className="p-4">
-          <button 
+          <button
             onClick={onClose}
             className="absolute top-4 right-4 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
             aria-label="Close menu"
@@ -25,25 +27,37 @@ const MobileMenu = ({ isOpen, onClose, onNavigate }) => {
           </button>
           <nav className="mt-8">
             <div className="flex flex-col space-y-4">
-              <button 
+              <button
                 onClick={() => onNavigate('home')}
                 className="text-left px-4 py-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
               >
-                Home
+                Write/Post
               </button>
-              <button 
+              <button
                 onClick={() => onNavigate('terms')}
                 className="text-left px-4 py-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
               >
                 Terms of Service
               </button>
-              <button 
+              <button
                 onClick={() => onNavigate('privacy')}
                 className="text-left px-4 py-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
               >
                 Privacy Policy
               </button>
-              <a 
+              <button
+                onClick={() => { onNavigate('mlAlgorithm'); setIsChatOpen(true); }}
+                className="text-left px-4 py-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+              >
+                Machine Learning Algorithm
+              </button>
+              <button
+                onClick={() => onNavigate('chatInterface')}
+                className="text-left px-4 py-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+              >
+                Chat Interface
+              </button>
+              <a
                 href="https://x.com/bniladridas"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -65,21 +79,21 @@ const Post = ({ post, onEdit, onDelete, onPreview }) => {
       <div className="flex justify-between items-center mb-2">
         <h3 className="text-xl font-medium dark:text-white">{post.title}</h3>
         <div className="flex space-x-2">
-          <button 
+          <button
             onClick={() => onPreview(post)}
             className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
             aria-label={`Preview ${post.title}`}
           >
             <Eye size={20} />
           </button>
-          <button 
+          <button
             onClick={() => onEdit(post.id)}
             className="text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
             aria-label={`Edit ${post.title}`}
           >
             <Pencil size={20} />
           </button>
-          <button 
+          <button
             onClick={() => onDelete(post.id)}
             className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
             aria-label={`Delete ${post.title}`}
@@ -98,7 +112,7 @@ const PostPreviewModal = ({ post, onClose }) => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') onClose();
     };
-    
+
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [onClose]);
@@ -106,8 +120,8 @@ const PostPreviewModal = ({ post, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-3xl relative max-h-[90vh] overflow-y-auto m-4">
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="absolute top-4 right-4 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
           aria-label="Close Preview"
         >
@@ -172,17 +186,17 @@ const PostForm = ({ currentPost, onSave, onCancel }) => {
         aria-label="Post Content"
       />
       <div className="flex justify-end mt-4 space-x-2">
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className="flex items-center bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-100"
           aria-label="Save Post"
         >
           <Save className="mr-2" size={20} />
           Save
         </button>
-        <button 
-          type="button" 
-          onClick={onCancel} 
+        <button
+          type="button"
+          onClick={onCancel}
           className="flex items-center bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
           aria-label="Cancel"
         >
@@ -192,8 +206,8 @@ const PostForm = ({ currentPost, onSave, onCancel }) => {
     </form>
   );
 };
-
 const App = () => {
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [posts, setPosts] = useState([]);
   const [currentPost, setCurrentPost] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -206,7 +220,26 @@ const App = () => {
     return localStorage.getItem('darkMode') === 'true';
   });
 
-  // Handle body scroll lock when menu is open
+  const bottomRef = useRef(null);
+  const topRef = useRef(null);
+
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: 'smooth'
+    });
+  };
+
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleNavigate = (page) => {
+    setCurrentPage(page);
+    setIsMenuOpen(false);
+    scrollToBottom();
+  };
+
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -218,7 +251,6 @@ const App = () => {
     };
   }, [isMenuOpen]);
 
-  // Close menu on window resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -230,7 +262,6 @@ const App = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Fetch posts from Firebase
   useEffect(() => {
     const q = query(collection(db, 'posts'), limit(40));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -250,7 +281,6 @@ const App = () => {
     return () => unsubscribe();
   }, []);
 
-  // Handle dark mode
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -261,12 +291,14 @@ const App = () => {
   }, [isDarkMode]);
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
-
-  const handleNavigate = (page) => {
-    setCurrentPage(page);
-    setIsMenuOpen(false);
+    console.log("Toggle Dark Mode Clicked");
+    setIsDarkMode(prevMode => {
+        const newMode = !prevMode;
+        document.documentElement.classList.toggle('dark', newMode);
+        localStorage.setItem('darkMode', newMode);
+        console.log("Dark mode toggled to: ", newMode);
+        return newMode;
+    });
   };
 
   const handleSavePost = async (post) => {
@@ -339,125 +371,170 @@ const App = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
+  const handleOpenChat = () => {
+    setIsChatOpen(true);
+    scrollToBottom();
+  };
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
-      <div className="max-w-4xl mx-auto p-4 md:p-6 font-sans">
-        <header className="mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl md:text-3xl font-light text-gray-800 dark:text-white">
-              gravity's sur-face!
-            </h1>
-            <div className="flex items-center space-x-4">
-              <ToggleSwitch isDarkMode={isDarkMode} onToggle={toggleDarkMode} />
-              <button 
-                onClick={toggleMenu}
-                className="md:hidden p-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
-                aria-label="Toggle Menu"
-                aria-expanded={isMenuOpen}
-              >
-                <Menu size={24} />
-              </button>
+    <div className={isDarkMode ? 'dark' : ''}>
+      <div className={`flex items-center ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-2 transition-colors duration-200`}>
+        <ToggleSwitch isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+        <img src="/favicon.ico" alt="Favicon" className="ml-3 h-8 w-8" />
+        <button onClick={() => { handleNavigate('mlAlgorithm'); setIsChatOpen(true); }} className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">Machine Learning Algorithm</button>
+      </div>
+      <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-200">
+        <div ref={topRef} />
+        <div className="max-w-4xl mx-auto p-4 md:p-6 font-sans">
+          <header className="mb-8 border-b border-gray-200 dark:border-gray-700 pb-4">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl md:text-3xl font-light text-gray-800 dark:text-white">
+                Gravity Blog
+              </h1>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={toggleMenu}
+                  className="md:hidden p-2 text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white"
+                  aria-label="Toggle Menu"
+                  aria-expanded={isMenuOpen}
+                >
+                  <Menu size={24} />
+                </button>
+              </div>
             </div>
-          </div>
 
-          <nav className="hidden md:flex mt-4 space-x-6">
-            <button 
-              onClick={() => handleNavigate('home')}
-              className={`text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white ${
-                currentPage === 'home' ? 'font-medium' : ''
-              }`}
-            >
-              Home
-            </button>
-            <button 
-              onClick={() => handleNavigate('terms')}
-              className={`text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white ${
-                currentPage === 'terms' ? 'font-medium' : ''
-              }`}
-            >
-              Terms of Service
-            </button>
-            <button 
-              onClick={() => handleNavigate('privacy')}
-              className={`text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white ${
-                currentPage === 'privacy' ? 'font-medium' : ''
-              }`}
-            >
-              Privacy Policy
-            </button>
-            <a 
-              href="https://x.com/bniladridas"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              Follow on X
-            </a>
-          </nav>
-        </header>
+            <nav className="hidden md:flex mt-4 space-x-6">
+              <button
+                onClick={() => handleNavigate('home')}
+                className={`text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white ${
+                  currentPage === 'home' ? 'font-medium' : ''
+                }`}
+              >
+                Write/Post
+              </button>
+              <button
+                onClick={() => handleNavigate('terms')}
+                className={`text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white ${
+                  currentPage === 'terms' ? 'font-medium' : ''
+                }`}
+              >
+                Terms of Service
+              </button>
+              <button
+                onClick={() => handleNavigate('privacy')}
+                className={`text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white ${
+                  currentPage === 'privacy' ? 'font-medium' : ''
+                }`}
+              >
+                Privacy Policy
+              </button>
+              <button
+                onClick={() => { handleNavigate('mlAlgorithm'); setIsChatOpen(true); }}
+                className={`text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white ${
+                  currentPage === 'mlAlgorithm' ? 'font-medium' : ''
+                }`}
+              >
+                Machine Learning Algorithm
+              </button>
+              <a
+                href="https://x.com/bniladridas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                Follow on X
+              </a>
+            </nav>
+          </header>
 
-        <MobileMenu 
-          isOpen={isMenuOpen} 
-          onClose={() => setIsMenuOpen(false)}
-          onNavigate={handleNavigate}
-        />
-
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {currentPage === 'home' && (
-          <>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900 dark:border-white"></div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:sticky md:top-4 self-start">
-                  <PostForm 
-                    currentPost={currentPost} 
-                    onSave={handleSavePost} 
-                    onCancel={handleCancel} 
-                  />
-                </div>
-                <div>
-                  <h2 className="text-xl font-light mb-4 flex items-center text-gray-800 dark:text-white">
-                    <FileText className="mr-2" /> Posts
-                  </h2>
-                  <BlogList 
-                    posts={posts} 
-                    onEdit={handleEditPost} 
-                    onDelete={handleDeletePost} 
-                    onPreview={handlePreviewPost} 
-                  />
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {currentPage === 'terms' && <TermsOfService />}
-        {currentPage === 'privacy' && <PrivacyPolicy />}
-
-        {previewPost && (
-          <PostPreviewModal 
-            post={previewPost} 
-            onClose={handleClosePreview} 
+          <MobileMenu
+            isOpen={isMenuOpen}
+            onClose={() => setIsMenuOpen(false)}
+            onNavigate={handleNavigate}
           />
-        )}
 
-        <footer className="mt-12 text-center text-gray-500 dark:text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Gravity Blog</p>
-        </footer>
+          {error && (
+            <div className="mb-4 p-4 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded-lg">
+              {error}
+            </div>
+          )}
+
+          <GoogleNews /> {/* Render GoogleNews component */}
+
+          {currentPage === 'home' && (
+            <>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900 dark:border-white"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:sticky md:top-4 self-start">
+                    <PostForm
+                      currentPost={currentPost}
+                      onSave={handleSavePost}
+                      onCancel={handleCancel}
+                    />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-light mb-4 flex items-center text-gray-800 dark:text-white">
+                      <FileText className="mr-2" /> Posts
+                    </h2>
+                    <BlogList
+                      posts={posts}
+                      onEdit={handleEditPost}
+                      onDelete={handleDeletePost}
+                      onPreview={handlePreviewPost}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {currentPage === 'terms' && <TermsOfService />}
+          {currentPage === 'privacy' && <PrivacyPolicy />}
+          {currentPage === 'mlAlgorithm' && <MachineLearningAlgorithm />}
+          {currentPage === 'chatInterface' && <ChatInterface onClose={handleCloseChat} />}
+          {isChatOpen && (
+            <ChatInterface>
+              {/* Machine Learning Usage in Chat */}
+              {/* The chat interface utilizes Google Generative AI, specifically the 'gemini-pro' model, to provide intelligent responses. */}
+              {/* The sendMessage function sends user input to the AI model and retrieves a contextually relevant response based on the conversation history. */}
+              {/* This integration enhances user interactions by making the chat experience more engaging and dynamic. */}
+            </ChatInterface>
+          )}
+          {previewPost && (
+            <PostPreviewModal
+              post={previewPost}
+              onClose={handleClosePreview}
+            />
+          )}
+
+          <button
+            onClick={handleOpenChat}
+            className="fixed bottom-4 right-4 bg-gray-500 text-white p-4 rounded-full shadow-lg hover:bg-gray-600"
+            aria-label="Open Chat"
+          >
+            <MessageCircle size={24} />
+          </button>
+          <button
+            onClick={scrollToTop}
+            className="fixed bottom-4 right-20 bg-gray-500 text-white p-4 rounded-full shadow-lg hover:bg-gray-600"
+            aria-label="Back to Top"
+          >
+            Back to Top
+          </button>
+          <footer className="mt-12 text-center text-gray-500 dark:text-gray-400">
+            <p>&copy; {new Date().getFullYear()} Gravity Blog</p>
+          </footer>
+          <div ref={bottomRef} />
+        </div>
       </div>
     </div>
   );
 };
 
-// PropTypes definitions
 MobileMenu.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
